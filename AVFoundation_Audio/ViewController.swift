@@ -9,17 +9,64 @@ import UIKit
 import AVFoundation
 import WebKit
 
+struct Video {
+    var name: String
+    var path: String
+}
+
 class ViewController: UIViewController {
     
-    @IBOutlet weak var playButton: UIButton!
-    @IBOutlet weak var stopButton: UIButton!
-    @IBOutlet weak var pauseButton: UIButton!
-    @IBOutlet weak var backwordButton: UIButton!
-    @IBOutlet weak var forwardButton: UIButton!
-    @IBOutlet weak var trackLabel: UILabel!
-    @IBOutlet weak var videoTable: UITableView!
+    private let videoTable = UITableView()
     
-    var Player = AVAudioPlayer()
+    private lazy var trackLabel: UILabel = {
+        let label = UILabel()
+        label.toAutoLayout()
+        label.textColor = .systemBlue
+        label.font = UIFont.boldSystemFont(ofSize: 18.0)
+        return label
+    }()
+    
+    private lazy var playButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "play.fill"), for: .normal)
+        button.addTarget(self, action: #selector(playButtonPressed), for:.touchUpInside)
+        button.toAutoLayout()
+        return button
+    }()
+
+    private lazy var stopButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "stop.fill"), for: .normal)
+        button.addTarget(self, action: #selector(stopButtonPressed), for:.touchUpInside)
+        button.toAutoLayout()
+        return button
+    }()
+    
+    private lazy var pauseButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "pause.fill"), for: .normal)
+        button.addTarget(self, action: #selector(pauseButtonPressed), for:.touchUpInside)
+        button.toAutoLayout()
+        return button
+    }()
+    
+    private lazy var backwordButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "backward.fill"), for: .normal)
+        button.addTarget(self, action: #selector(backwordButtonPressed), for:.touchUpInside)
+        button.toAutoLayout()
+        return button
+    }()
+    
+    private lazy var forwardButton: UIButton = {
+        let button = UIButton(type: .system)
+        button.setImage(UIImage(systemName: "forward.fill"), for: .normal)
+        button.addTarget(self, action: #selector(forwardButtonPressed), for:.touchUpInside)
+        button.toAutoLayout()
+        return button
+    }()
+    
+    var player = AVAudioPlayer()
     var baseOffset: CGFloat = 40
     var nowPlayingIndex: Int = 0
 
@@ -30,13 +77,13 @@ class ViewController: UIViewController {
         "Britney Spears - Baby One More Time",
         "Michael Jackson-Thriller"
     ]
-    
+
     lazy var youTubeUrls = [
-        "https://youtu.be/VeFmB7-Zuzs",
-        "https://youtu.be/d055dteIwXU",
-        "https://youtu.be/-2zv1sBmNaw",
-        "https://youtu.be/X7bvwHI1goI",
-        "https://youtu.be/tTkeIvF1Vec"
+        Video(name: "Как Высокая Дама продала RE Village — дизайн Димитреску и почему игры-хорроры не пугают", path: "https://youtu.be/VeFmB7-Zuzs"),
+        Video(name: "The Witcher 3: Wild Hunt Прохождение ► ТРАВНИЦА", path: "https://youtu.be/d055dteIwXU"),
+        Video(name: "Игры от Blizzard, Монхан и Черепашки Ниндзя для Switch – всё это в новостях NintenДа!", path: "https://youtu.be/-2zv1sBmNaw"),
+        Video(name: "Самое быстрое прохождение Dead Space [Спидран в деталях]", path: "https://youtu.be/X7bvwHI1goI"),
+        Video(name: "Phasmophobia ► КООП-СТРИМ", path: "https://youtu.be/tTkeIvF1Vec")
     ]
 
     private var reuseId: String {
@@ -48,28 +95,31 @@ class ViewController: UIViewController {
         super.viewDidLoad()
         
         videoTable.dataSource = self
+        videoTable.delegate = self
         videoTable.isScrollEnabled = true
         videoTable.register(VideoCell.self, forCellReuseIdentifier: reuseId)
-        videoTable.separatorStyle = .singleLine
+        videoTable.tableFooterView = UIView()
         
         prepareToPlay(trackIndex: nowPlayingIndex)
 
-        playButton.toAutoLayout()
-        stopButton.toAutoLayout()
-        pauseButton.toAutoLayout()
         videoTable.toAutoLayout()
-        trackLabel.toAutoLayout()
-        forwardButton.toAutoLayout()
-        backwordButton.toAutoLayout()
+        view.addSubview(videoTable)
+        view.addSubview(trackLabel)
+        view.addSubview(playButton)
+        view.addSubview(stopButton)
+        view.addSubview(pauseButton)
+        view.addSubview(forwardButton)
+        view.addSubview(backwordButton)
+        
         setupLayout()
         
-        trackName.text = soundsList[nowPlayingIndex]
+        trackLabel.text = soundsList[nowPlayingIndex]
     }
     
     func prepareToPlay(trackIndex: Int) {
         do {
-            Player = try AVAudioPlayer(contentsOf: URL.init(fileURLWithPath: Bundle.main.path(forResource: soundsList[trackIndex], ofType: "mp3")!))
-            Player.prepareToPlay()
+            player = try AVAudioPlayer(contentsOf: URL.init(fileURLWithPath: Bundle.main.path(forResource: soundsList[trackIndex], ofType: "mp3")!))
+            player.prepareToPlay()
         }
         catch {
             print(error)
@@ -114,32 +164,30 @@ class ViewController: UIViewController {
             
         ])
     }
-
-    @IBOutlet weak var trackName: UILabel!
     
-    @IBAction func PauseButton(_ sender: Any) {
-        if Player.isPlaying {
-            Player.stop()
+    @objc func pauseButtonPressed() {
+        if player.isPlaying {
+            player.stop()
         }
         else {
             print("Already paused!")
         }
     }
     
-    @IBAction func PlayButton(_ sender: Any) {
-        Player.play()
+    @objc func playButtonPressed() {
+        player.play()
     }
     
-    @IBAction func StopButton(_ sender: Any) {
-        if Player.isPlaying {
-            Player.stop()
-            Player.currentTime = 0
+    @objc func stopButtonPressed() {
+        if player.isPlaying {
+            player.stop()
+            player.currentTime = 0
         }
         else {
             print("Already stopped!")
         }
     }
-    @IBAction func forwordTrack(_ sender: Any) {
+    @objc func forwardButtonPressed() {
         print("Перематываем трек вперед \(nowPlayingIndex)")
         if nowPlayingIndex == soundsList.count - 1 {
             nowPlayingIndex = 0
@@ -149,10 +197,10 @@ class ViewController: UIViewController {
         print("Перемотали трек вперед \(nowPlayingIndex)")
         prepareToPlay(trackIndex: nowPlayingIndex)
         trackLabel.text = soundsList[nowPlayingIndex]
-        Player.play()
+        player.play()
     }
     
-    @IBAction func backwordTrack(_ sender: Any) {
+    @objc func backwordButtonPressed() {
         print("Перематываем трек назад \(nowPlayingIndex)")
         if nowPlayingIndex == 0 {
             nowPlayingIndex = soundsList.count - 1
@@ -162,16 +210,35 @@ class ViewController: UIViewController {
         print("Перемотали трек назад \(nowPlayingIndex)")
         prepareToPlay(trackIndex: nowPlayingIndex)
         trackLabel.text = soundsList[nowPlayingIndex]
-        Player.play()
+        player.play()
+    }
+    
+    public lazy var videoWKVebview: WKWebView = {
+        let preferences = WKPreferences()
+        let configuration = WKWebViewConfiguration()
+        configuration.allowsInlineMediaPlayback = true
+        configuration.preferences = preferences
+        let webview = WKWebView(frame: view.bounds, configuration: configuration)
+        webview.scrollView.bounces = true
+        return webview
+    }()
+    
+    private lazy var closeVideoButton: UIButton = {
+        let button = UIButton()
+        button.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
+        button.addTarget(self, action: #selector(closeVideo), for:.touchUpInside)
+        button.tintColor = .red
+        button.toAutoLayout()
+        return button
+    }()
+    
+    @objc func closeVideo() {
+        closeVideoButton.isHidden = true
+        videoWKVebview.removeFromSuperview()
     }
 }
 
-@available(iOS 13.0, *)
 extension ViewController: UITableViewDataSource {
-    
-    func numberOfSections(in tableView: UITableView) -> Int {
-        return 1
-    }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return youTubeUrls.count
@@ -179,10 +246,33 @@ extension ViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell: VideoCell = tableView.dequeueReusableCell(withIdentifier: reuseId, for: indexPath) as! VideoCell
-        
-        let url = youTubeUrls[indexPath.row]
-        cell.configure(url: URL(string: url)!)
+
+        cell.configure(video: youTubeUrls[indexPath.row])
         return cell
+    }
+    
+    func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 50
+    }
+}
+
+extension ViewController: UITableViewDelegate {
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let url = URL(string: youTubeUrls[indexPath.row].path)
+        let request = URLRequest(url: url!)
+        
+        view.addSubview(videoWKVebview)
+        view.addSubview(closeVideoButton)
+        
+        closeVideoButton.isHidden = false
+        videoWKVebview.load(request)
+        
+        NSLayoutConstraint.activate([
+            closeVideoButton.topAnchor.constraint(equalTo: view.topAnchor, constant: 20),
+            closeVideoButton.heightAnchor.constraint(equalToConstant: 40),
+            closeVideoButton.widthAnchor.constraint(equalToConstant: 40),
+            closeVideoButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -30)
+        ])
     }
 }
 

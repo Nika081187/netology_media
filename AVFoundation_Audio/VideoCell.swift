@@ -13,27 +13,24 @@ class VideoCell: UITableViewCell {
     
     let baseOffset: CGFloat =  16
     
-    public lazy var videoWKVebview: WKWebView = {
-        let config = WKWebViewConfiguration()
-        config.allowsInlineMediaPlayback = true
-        let view = WKWebView(frame: CGRect(x: 0, y: 0, width: 0, height: 0), configuration: config)
-        view.configuration.mediaTypesRequiringUserActionForPlayback = .video
-        view.configuration.mediaTypesRequiringUserActionForPlayback = .audio
-        view.toAutoLayout()
-        view.backgroundColor = .black
-        return view
+    private var videoLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = .black
+        label.toAutoLayout()
+        return label
     }()
     
-    public func configure(url: URL){
-        videoWKVebview.load(URLRequest(url: url))
-    }
-
-    private lazy var content: UIView = {
-        let view = UIView()
-        view.backgroundColor = .black
-        view.toAutoLayout()
-        return view
+    private var videoIcon: UIImageView = {
+        let image = UIImageView()
+        image.image = UIImage(systemName: "video.fill")
+        image.tintColor = .systemBlue
+        image.toAutoLayout()
+        return image
     }()
+    
+    public func configure(video: Video){
+        videoLabel.text = video.name
+    }
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -44,27 +41,21 @@ class VideoCell: UITableViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
-    override func layoutSubviews() {
-        super.layoutSubviews()
-
-        contentView.frame = contentView.frame.inset(by: UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10))
-    }
-    
     func setupLayout() {
-        contentView.addSubview(content)
-        content.addSubview(videoWKVebview)
+        contentView.addSubview(videoIcon)
+        contentView.addSubview(videoLabel)
         
         let constraint =  [
-            content.topAnchor.constraint(equalTo: contentView.topAnchor),
-            content.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: baseOffset),
-            content.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -(baseOffset)),
-            content.heightAnchor.constraint(equalToConstant: 200),
-            content.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+            videoIcon.centerYAnchor.constraint(equalTo: contentView.centerYAnchor),
+            videoIcon.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: baseOffset),
+            videoIcon.heightAnchor.constraint(equalToConstant: 20),
+            videoIcon.widthAnchor.constraint(equalToConstant: 20),
             
-            videoWKVebview.topAnchor.constraint(equalTo: content.topAnchor),
-            videoWKVebview.leadingAnchor.constraint(equalTo: content.leadingAnchor),
-            videoWKVebview.trailingAnchor.constraint(equalTo: content.trailingAnchor),
-            videoWKVebview.bottomAnchor.constraint(equalTo: content.bottomAnchor),
+            videoLabel.topAnchor.constraint(equalTo: contentView.topAnchor),
+            videoLabel.leadingAnchor.constraint(equalTo: videoIcon.trailingAnchor, constant: baseOffset),
+            videoLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -(baseOffset)),
+            videoLabel.heightAnchor.constraint(equalToConstant: 20),
+            videoLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
         ]
         NSLayoutConstraint.activate(constraint)
     }
